@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>フードログ</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ======= 共通スタイル ======= */
+  body { font-family: sans-serif; margin: 0; padding: 0; transition: background-color 0.6s, color 0.6s; }
+  main { padding: 20px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+  th, td { border: 1px solid #aaa; padding: 8px; }
+  button { margin: 4px; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+
+  /* ======= 昼夜テーマ ======= */
+  body.day { background-color: #fdfdfd; color: #333; }
+  body.night { background-color: #121212; color: #eee; }
+  body.night button { background-color: #333; color: #fff; border: 1px solid #777; }
+  body.day button { background-color: #f3f3f3; color: #000; border: 1px solid #ccc; }
+
+  /* ======= 状態色 ======= */
+  .expired { background: #ffb3b3; }
+  .warning { background: #ffd9b3; }
+  .caution { background: #ffffb3; }
+
+  /* ======= ヘッダー ======= */
+  header {
+    background-color: orange;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header h1 { margin: 0; }
+  nav button {
+    margin-left: 10px;
+    background: white;
+    color: black;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+  }
+
+  #chart-area { width: 80%; margin: 30px auto; }
+  .hidden { display: none; }
+
+  .logout {
+    margin-left: 15px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 6px;
+  }
+</style>
+</head>
+
+<body>
+  <header>
+    <h1>フードログ</h1>
+    <nav>
+      <button onclick="location.href='recipe.html'">レシピ</button>
+      <button onclick="window.open('https://www4.city.kanazawa.lg.jp/soshikikarasagasu/zeroc/ondankataisaku/syokuhinlosstaisaku/7494.html','_blank')">
+        金沢フードバンク
+      </button>
+      <button class="logout" onclick="logout()">ログアウト</button>
+    </nav>
+  </header>
+
+  <main>
+    <h2>食材登録</h2>
+    <form id="addForm">
+      食材名<input id="name" required>
+      数量<input id="qty" type="number" min="1">
+      賞味期限<input id="exp" type="date" required>
+      <button>追加</button>
+    </form>
+
+    <select id="sort">
+      <option value="added">追加順</option>
+      <option value="name">名前順</option>
+      <option value="exp">期限順</option>
+    </select>
+    <button onclick="render()">並び替え</button>
+
+    <table>
+      <thead><tr><th>食材</th><th>数量</th><th>期限</th><th>残り</th><th>操作</th></tr></thead>
+      <tbody id="table-body"></tbody>
+    </table>
+
+    <h3>非表示中</h3>
+    <ul id="hidden-list"></ul>
+
+    <hr>
+
+    <h2>グラフ</h2>
+    <button onclick="showPie()">円グラフ（在庫比率）</button>
+    <button onclick="showBar()">棒グラフ（数量）</button>
+    <button onclick="showLine()">折れ線グラフ（残り日数）</button>
+    <button onclick="showUsage()">消費履歴グラフ</button>
+
+    <div id="chart-area">
+      <canvas id="chart"></canvas>
+    </div>
+
+    <p id="theme-status" style="text-align:center; font-weight:bold;"></p>
+  </main>
+
+<script src="script.js"></script>
+<script>
+  // ======= 自動テーマ切替 =======
+  function setThemeByTime() {
+    const hour = new Date().getHours();
+    const theme = (hour >= 5 && hour <= 18) ? "day" : "night";
+    document.body.className = theme;
+    document.getElementById("theme-status").textContent =
+      theme === "day" ? "🌞 現在：Dayモード（白基調）" : "🌙 現在：Nightモード（ダーク）";
+  }
+  setThemeByTime();
+  setInterval(setThemeByTime, 3600000);
+</script>
+</body>
+</html>
