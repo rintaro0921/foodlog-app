@@ -2,29 +2,30 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>レシピ提案</title>
+<title>AIレシピ提案</title>
 <style>
-  body { font-family:sans-serif; padding:20px; background:#fffaf0; }
-  button { padding:8px 14px; margin-top:10px; }
-  #result { margin-top:20px; white-space:pre-wrap; }
+body { font-family: sans-serif; margin: 40px; background: #fff9f0; }
+textarea { width: 100%; height: 100px; }
+#result { margin-top: 20px; white-space: pre-wrap; background: #f0f0f0; padding: 10px; border-radius: 8px; }
 </style>
 </head>
 <body>
   <h1>AIレシピ提案</h1>
-  <p>冷蔵庫の食材を入力してください（例：卵、牛乳、トマト）</p>
-  <input id="ingredients" style="width:60%" placeholder="食材をカンマ区切りで入力">
-  <button onclick="getRecipe()">レシピ提案を受ける</button>
-  <button onclick="location.href='main.html'">戻る</button>
-
+  <p>食材を入力してください（例：牛乳、卵、トマト）</p>
+  <textarea id="ingredients"></textarea><br>
+  <button onclick="getRecipe()">レシピを提案</button>
   <div id="result"></div>
 
 <script>
-async function getRecipe(){
-  const ing = document.getElementById("ingredients").value;
-  if(!ing){ alert("食材を入力してください"); return; }
-
-  // ▼ 後でAI API接続（現状ダミー表示）
-  document.getElementById("result").textContent = "🔍 AIがレシピを考え中...\n\n（API接続後に提案が表示されます）";
+async function getRecipe() {
+  const ingredients = document.getElementById("ingredients").value.split(/[、,\s]+/);
+  const res = await fetch("http://localhost:3000/api/recipe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ingredients })
+  });
+  const data = await res.json();
+  document.getElementById("result").textContent = data.result || "エラーが発生しました";
 }
 </script>
 </body>
