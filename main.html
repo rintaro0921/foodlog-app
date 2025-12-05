@@ -1,123 +1,264 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<title>フードログ</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>フードログ｜メイン画面</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link rel="stylesheet" href="style.css">
 <style>
-  /* ======= 共通スタイル ======= */
-  body { font-family: sans-serif; margin: 0; padding: 0; transition: background-color 0.6s, color 0.6s; }
-  main { padding: 20px; }
-  table { border-collapse: collapse; width: 100%; margin-top: 15px; }
-  th, td { border: 1px solid #aaa; padding: 8px; }
-  button { margin: 4px; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
-
-  /* ======= 昼夜テーマ ======= */
-  body.day { background-color: #fdfdfd; color: #333; }
-  body.night { background-color: #121212; color: #eee; }
-  body.night button { background-color: #333; color: #fff; border: 1px solid #777; }
-  body.day button { background-color: #f3f3f3; color: #000; border: 1px solid #ccc; }
-
-  /* ======= 状態色 ======= */
-  .expired { background: #ffb3b3; }
-  .warning { background: #ffd9b3; }
-  .caution { background: #ffffb3; }
-
-  /* ======= ヘッダー ======= */
-  header {
-    background-color: orange;
-    color: white;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  header h1 { margin: 0; }
-  nav button {
-    margin-left: 10px;
-    background: white;
-    color: black;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-  }
-
-  #chart-area { width: 80%; margin: 30px auto; }
-  .hidden { display: none; }
-
-  .logout {
-    margin-left: 15px;
-    background: #f0f0f0;
-    border: none;
-    border-radius: 6px;
-  }
+  body { font-family: "Segoe UI", sans-serif; margin: 0; transition: background 0.4s, color 0.4s; }
+  header { background: orange; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+  header button { margin: 0 8px; padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+  .container { padding: 20px; }
+  form input, select { padding: 6px; margin: 4px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+  .expired { background-color: #ffb3b3; }
+  .warning { background-color: #ffd9b3; }
+  .caution { background-color: #ffffb3; }
+  .bottom-area { display: flex; justify-content: space-between; margin-top: 20px; }
+  .chart-box, .calendar-box { width: 48%; border: 2px solid #333; border-radius: 10px; padding: 10px; }
+  #chart { width: 100%; height: 100%; }
+  #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; }
+  .day { text-align: center; padding: 6px; border-radius: 6px; min-height: 60px; font-size: 12px; }
+  .has-expiry { background-color: rgba(255, 165, 0, 0.5); }
+  body.night { background: #121212; color: #e0f7ff; }
+  body.night header { background: #007acc; }
+  body.night .chart-box, body.night .calendar-box { border-color: #00aaff; }
+  .graph-menu button { margin-right: 10px; padding: 6px 10px; border-radius: 6px; }
 </style>
 </head>
-
 <body>
-  <header>
-    <h1>フードログ</h1>
-    <nav>
-      <button onclick="location.href='recipe.html'">レシピ</button>
-      <button onclick="window.open('https://www4.city.kanazawa.lg.jp/soshikikarasagasu/zeroc/ondankataisaku/syokuhinlosstaisaku/7494.html','_blank')">
-        金沢フードバンク
-      </button>
-      <button class="logout" onclick="logout()">ログアウト</button>
-    </nav>
-  </header>
+<header>
+  <div><h2>フードログ</h2></div>
+  <div>
+    <button onclick="window.open('https://www4.city.kanazawa.lg.jp/soshikikarasagasu/zeroc/ondankataisaku/syokuhinlosstaisaku/7494.html','_blank')">金沢フードバンク</button>
+    <button onclick="location.href='recipe.html'">レシピ</button>
+    <button onclick="suggestRecipe()">AIレシピ提案</button> <!-- ←これ追加 -->
+    <button onclick="location.href='settings.html'">設定</button>
+  </div>
+</header>
 
-  <main>
-    <h2>食材登録</h2>
-    <form id="addForm">
-      食材名<input id="name" required>
-      数量<input id="qty" type="number" min="1">
-      賞味期限<input id="exp" type="date" required>
-      <button>追加</button>
-    </form>
 
-    <select id="sort">
-      <option value="added">追加順</option>
-      <option value="name">名前順</option>
-      <option value="exp">期限順</option>
-    </select>
-    <button onclick="render()">並び替え</button>
+<div class="container">
+  <h3>食材登録</h3>
+  <form id="addForm">
+    食材名<input id="foodName" required>
+    数量<input id="foodQty" type="number" min="1" value="1">
+    カテゴリ<select id="foodCategory"></select>
+    賞味期限<input id="foodExp" type="date" required>
+    <button>追加</button>
+  </form>
 
-    <table>
-      <thead><tr><th>食材</th><th>数量</th><th>期限</th><th>残り</th><th>操作</th></tr></thead>
-      <tbody id="table-body"></tbody>
-    </table>
+  <table>
+    <thead>
+      <tr><th>食材</th><th>数量</th><th>カテゴリ</th><th>賞味期限</th><th>残り</th><th>操作</th></tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
 
-    <h3>非表示中</h3>
-    <ul id="hidden-list"></ul>
+  <h3>在庫データ分析</h3>
+  <div class="graph-menu">
+    <button onclick="showGraph('expiry')">賞味期限グラフ</button>
+    <button onclick="showGraph('consume')">消費量グラフ</button>
+    <button onclick="showGraph('trend')">月別在庫推移</button>
+    <button onclick="showGraph('category')">構成比グラフ</button>
+  </div>
 
-    <hr>
+  <div class="bottom-area">
+    <div class="chart-box"><canvas id="chart"></canvas></div>
+    <div class="calendar-box"><h3>賞味期限カレンダー</h3><div id="calendar"></div></div>
+  </div>
+</div>
 
-    <h2>グラフ</h2>
-    <button onclick="showPie()">円グラフ（在庫比率）</button>
-    <button onclick="showBar()">棒グラフ（数量）</button>
-    <button onclick="showLine()">折れ線グラフ（残り日数）</button>
-    <button onclick="showUsage()">消費履歴グラフ</button>
-
-    <div id="chart-area">
-      <canvas id="chart"></canvas>
-    </div>
-
-    <p id="theme-status" style="text-align:center; font-weight:bold;"></p>
-  </main>
-
-<script src="script.js"></script>
 <script>
-  // ======= 自動テーマ切替 =======
-  function setThemeByTime() {
-    const hour = new Date().getHours();
-    const theme = (hour >= 5 && hour <= 18) ? "day" : "night";
-    document.body.className = theme;
-    document.getElementById("theme-status").textContent =
-      theme === "day" ? "🌞 現在：Dayモード（白基調）" : "🌙 現在：Nightモード（ダーク）";
+function applyTheme(){
+  const h=new Date().getHours();
+  document.body.classList.toggle("night",h<5||h>18);
+}
+applyTheme();
+
+// ---------- データ ----------
+let data = JSON.parse(localStorage.getItem("foods") || "[]");
+let consumed = JSON.parse(localStorage.getItem("consumed") || "[]");
+const categories = JSON.parse(localStorage.getItem("categories") || "[]");
+
+const categorySelect=document.getElementById("foodCategory");
+(categories.length ? categories.map(c=>c.name) : ["乳製品","肉類","野菜","果物","飲み物","調味料"]).forEach(c=>{
+  const opt=document.createElement("option");
+  opt.value=c; opt.textContent=c;
+  categorySelect.append(opt);
+});
+
+// ✅ 修正版: 安全な変数名でフォームから取得
+document.getElementById("addForm").onsubmit = e => {
+  e.preventDefault();
+  const item = {
+    id: Date.now(),
+    name: document.getElementById("foodName").value.trim(),
+    qty: Number(document.getElementById("foodQty").value),
+    cat: document.getElementById("foodCategory").value,
+    exp: document.getElementById("foodExp").value
+  };
+  if (!item.name || !item.exp) return alert("すべて入力してください");
+
+  data.push(item);
+  localStorage.setItem("foods", JSON.stringify(data));
+  alert("登録しました！");
+  render();
+};
+
+function remain(d){ return Math.ceil((new Date(d)-new Date())/86400000); }
+
+function render(){
+  const tbody=document.getElementById("table-body");
+  tbody.innerHTML="";
+  data.forEach((item,i)=>{
+    const diff=remain(item.exp);
+    const tr=document.createElement("tr");
+    if(diff<0) tr.classList.add("expired");
+    else if(diff<=3) tr.classList.add("warning");
+    else if(diff<=7) tr.classList.add("caution");
+    tr.innerHTML=`
+      <td><input value="${item.name}" onchange="editItem(${i},'name',this.value)"></td>
+      <td><input type='number' value="${item.qty}" min="1" onchange="editItem(${i},'qty',this.value)"></td>
+      <td>${item.cat}</td>
+      <td><input type='date' value="${item.exp}" onchange="editItem(${i},'exp',this.value)"></td>
+      <td>${diff}日</td>
+      <td><button onclick="consumeItem(${i})">消費</button></td>`;
+    tbody.append(tr);
+  });
+  updateChart(currentMode);
+  updateCalendar();
+}
+
+function editItem(i,key,val){
+  data[i][key]=val;
+  localStorage.setItem("foods",JSON.stringify(data));
+}
+
+function consumeItem(i){
+  consumed.push({...data[i], date:new Date().toISOString().slice(0,10)});
+  data.splice(i,1);
+  localStorage.setItem("foods",JSON.stringify(data));
+  localStorage.setItem("consumed",JSON.stringify(consumed));
+  alert("消費として記録しました！");
+  render();
+}
+
+// ---------- グラフ ----------
+let chart;
+let currentMode="expiry";
+
+function showGraph(mode){ currentMode=mode; updateChart(mode); }
+
+function updateChart(mode){
+  if(chart) chart.destroy();
+  const ctx=document.getElementById("chart");
+  const colorMap={};
+  categories.forEach(c=>colorMap[c.name]=c.color);
+  if(mode==="expiry"){
+    const labels=data.map(x=>x.name);
+    const values=data.map(x=>remain(x.exp));
+    const colors=data.map(x=>colorMap[x.cat]||"orange");
+    chart=new Chart(ctx,{type:"bar",data:{labels,datasets:[{label:"賞味期限までの日数",data:values,backgroundColor:colors}]},options:{scales:{y:{beginAtZero:true}}}});
+  }else if(mode==="consume"){
+    const weekMap={};
+    consumed.forEach(c=>{
+      const weekStart=new Date(c.date);
+      weekStart.setDate(weekStart.getDate()-weekStart.getDay());
+      const key=weekStart.toISOString().slice(0,10);
+      weekMap[key]=(weekMap[key]||0)+Number(c.qty||1);
+    });
+    const labels=Object.keys(weekMap).sort();
+    const values=labels.map(k=>weekMap[k]);
+    chart=new Chart(ctx,{type:"line",data:{labels,datasets:[{label:"週別消費量",data:values,borderColor:"skyblue",fill:false}]},options:{scales:{y:{beginAtZero:true}}}});
+  }else if(mode==="category"){
+    const catCount={};
+    data.forEach(f=>catCount[f.cat]=(catCount[f.cat]||0)+Number(f.qty));
+    const labels=Object.keys(catCount);
+    const values=Object.values(catCount);
+    const colors=labels.map(c=>colorMap[c]||"orange");
+    chart=new Chart(ctx,{type:"pie",data:{labels,datasets:[{data:values,backgroundColor:colors}]},options:{plugins:{legend:{position:"bottom"}}}});
+  }else if(mode==="trend"){
+    const monthMap={};
+    data.forEach(f=>{
+      const m=f.exp.slice(0,7);
+      monthMap[m]=(monthMap[m]||0)+1;
+    });
+    const labels=Object.keys(monthMap).sort();
+    const values=labels.map(k=>monthMap[k]);
+    chart=new Chart(ctx,{type:"bar",data:{labels,datasets:[{label:"月別在庫推移",data:values,backgroundColor:"orange"}]}});
   }
-  setThemeByTime();
-  setInterval(setThemeByTime, 3600000);
+}
+
+// ---------- カレンダー ----------
+function updateCalendar(){
+  const cal=document.getElementById("calendar");
+  cal.innerHTML="";
+  const today=new Date();
+  const year=today.getFullYear();
+  const month=today.getMonth();
+  const first=new Date(year,month,1);
+  const last=new Date(year,month+1,0);
+  const weekDays=["日","月","火","水","木","金","土"];
+  weekDays.forEach(d=>{
+    const el=document.createElement("div");
+    el.textContent=d;
+    el.style.fontWeight="bold";
+    cal.append(el);
+  });
+  for(let i=0;i<first.getDay();i++) cal.append(document.createElement("div"));
+  for(let i=1;i<=last.getDate();i++){
+    const el=document.createElement("div");
+    el.className="day";
+    el.textContent=i;
+    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+    const expFoods=data.filter(f=>f.exp===dateStr);
+    if(expFoods.length>0){
+      el.classList.add("has-expiry");
+      expFoods.forEach(f=>{
+        const p=document.createElement("div");
+        p.style.fontSize="10px";
+        p.textContent=f.name;
+        el.append(p);
+      });
+    }
+    cal.append(el);
+  }
+}
+async function saveToServer() {
+  await fetch("http://localhost:3000/api/foods", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+}
+
+// --- サーバー読込 ---
+async function loadFromServer() {
+  const res = await fetch("http://localhost:3000/api/foods");
+  data = await res.json();
+  render();
+}
+
+// --- AIレシピ提案 ---
+async function suggestRecipe() {
+  const ingredients = data.map(f => f.name);
+  const res = await fetch("http://localhost:3000/api/recipe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ingredients })
+  });
+  const result = await res.json();
+  if (result.recipe) {
+    localStorage.setItem("ai_recipe", result.recipe);
+    location.href = "recipe.html"; // ← 自動でレシピページへ移動
+  } else {
+    alert("提案に失敗しました");
+  }
+}
+render();
 </script>
 </body>
 </html>

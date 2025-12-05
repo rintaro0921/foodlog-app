@@ -2,20 +2,165 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>ログイン - FoodLog</title>
-<link rel="stylesheet" href="style.css">
+<title>フードログ｜ログイン画面</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body {
+    font-family: "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 0;
+    transition: background 0.5s, color 0.5s;
+  }
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  .login-box {
+    background: rgba(255,255,255,0.9);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+    transition: background 0.5s;
+  }
+  .login-box h1 {
+    margin-bottom: 25px;
+  }
+  input {
+    width: 80%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #aaa;
+    font-size: 1rem;
+  }
+  button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 10px;
+  }
+  .tab {
+    margin-bottom: 15px;
+  }
+  .tab button {
+    width: 40%;
+    font-weight: bold;
+  }
+  .active {
+    background: orange;
+    color: white;
+  }
+
+  /* 夜間テーマ */
+  body.night {
+    background: #121212;
+    color: #e0f7ff;
+  }
+  body.night .login-box {
+    background: rgba(30,30,30,0.9);
+  }
+  body.night input {
+    background: #222;
+    color: #e0f7ff;
+    border: 1px solid #666;
+  }
+  body.night button.active {
+    background: #00aaff;
+    color: white;
+  }
+</style>
 </head>
 <body>
+<div class="container">
+  <div class="login-box">
+    <h1>フードログ｜ログイン画面</h1>
+    <div class="tab">
+      <button id="loginTab" class="active" onclick="switchTab('login')">ログイン</button>
+      <button id="registerTab" onclick="switchTab('register')">新規登録</button>
+    </div>
 
-<div class="box">
-  <h2>ログイン</h2>
-  <input id="login-user" placeholder="ユーザー名"><br>
-  <input id="login-pass" type="password" placeholder="パスワード"><br>
-  <button onclick="login()">ログイン</button>
-  <button onclick="location.href='register.html'">新規登録</button>
-  <p id="login-msg" class="error"></p>
+    <div id="loginForm">
+      <input id="loginUser" placeholder="ユーザー名"><br>
+      <input id="loginPass" type="password" placeholder="パスワード"><br>
+      <button onclick="login()">ログイン</button>
+    </div>
+
+    <div id="registerForm" style="display:none;">
+      <input id="regUser" placeholder="ユーザー名"><br>
+      <input id="regPass" type="password" placeholder="パスワード"><br>
+      <button onclick="register()">登録</button>
+    </div>
+  </div>
 </div>
 
-<script src="script.js"></script>
+<script>
+  // === テーマ自動切替 ===
+  function applyTheme() {
+    const now = new Date();
+    const hour = now.getHours();
+    if (hour >= 5 && hour <= 18) {
+      document.body.classList.remove('night');
+    } else {
+      document.body.classList.add('night');
+    }
+  }
+  applyTheme();
+
+  // === タブ切替 ===
+  function switchTab(tab) {
+    const loginTab = document.getElementById('loginTab');
+    const registerTab = document.getElementById('registerTab');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    if (tab === 'login') {
+      loginForm.style.display = 'block';
+      registerForm.style.display = 'none';
+      loginTab.classList.add('active');
+      registerTab.classList.remove('active');
+    } else {
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'block';
+      loginTab.classList.remove('active');
+      registerTab.classList.add('active');
+    }
+  }
+
+  // === ログイン処理 ===
+  function login() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    const users = JSON.parse(localStorage.getItem("users") || "{}");
+
+    if (users[user] && users[user] === pass) {
+      alert("ログイン成功！");
+      localStorage.setItem("currentUser", user);
+      window.location.href = "main.html";
+    } else {
+      alert("ユーザー名またはパスワードが違います");
+    }
+  }
+
+  // === 新規登録処理 ===
+  function register() {
+    const user = document.getElementById('regUser').value.trim();
+    const pass = document.getElementById('regPass').value.trim();
+    if (!user || !pass) return alert("すべて入力してください");
+
+    const users = JSON.parse(localStorage.getItem("users") || "{}");
+    if (users[user]) return alert("このユーザー名は既に存在します");
+
+    users[user] = pass;
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("登録完了！ログインしてください。");
+    switchTab('login');
+  }
+</script>
 </body>
 </html>

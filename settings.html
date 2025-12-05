@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>フードログ｜設定ページ</title>
+<style>
+  body {
+    font-family: "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 0;
+    transition: background 0.5s, color 0.5s;
+  }
+  header {
+    background: orange;
+    color: white;
+    padding: 15px;
+    text-align: center;
+  }
+  main {
+    padding: 20px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 20px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+  input[type="color"] {
+    border: none;
+    width: 40px;
+    height: 30px;
+    cursor: pointer;
+  }
+  button {
+    margin: 5px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  #addSection {
+    margin-top: 30px;
+    border-top: 2px solid #999;
+    padding-top: 20px;
+  }
+
+  /* 夜間テーマ */
+  body.night { background: #121212; color: #e0f7ff; }
+  body.night header { background: #007acc; }
+  body.night table, body.night th, body.night td { border-color: #00aaff; }
+</style>
+</head>
+<body>
+<header><h2>カテゴリ設定</h2></header>
+<main>
+  <h3>現在のカテゴリ</h3>
+  <table id="categoryTable">
+    <thead>
+      <tr><th>カテゴリ名</th><th>色</th><th>操作</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="addSection">
+    <h3>新しいカテゴリを追加</h3>
+    名前：<input id="newCatName" placeholder="例: スープ類">
+    色：<input id="newCatColor" type="color" value="#ff9900">
+    <button onclick="addCategory()">追加</button>
+  </div>
+
+  <div style="margin-top:20px;">
+    <button onclick="saveAndReturn()">保存して戻る</button>
+  </div>
+</main>
+
+<script>
+  // === テーマ切替 ===
+  function applyTheme(){
+    const h=new Date().getHours();
+    document.body.classList.toggle("night",h<5||h>18);
+  }
+  applyTheme();
+
+  // === カテゴリデータ読込 ===
+  let categories = JSON.parse(localStorage.getItem("categories") || "[]");
+
+  // デフォルトカテゴリ（初期化用）
+  const defaultCategories = [
+    {name:"乳製品",color:"#fff200"},
+    {name:"肉類",color:"#ff3333"},
+    {name:"魚介類",color:"#3399ff"},
+    {name:"野菜",color:"#33cc33"},
+    {name:"果物",color:"#ff99cc"},
+    {name:"飲み物",color:"#00ccff"},
+    {name:"調味料",color:"#996633"},
+    {name:"スナック・菓子",color:"#ffcc66"},
+    {name:"加工食品・惣菜",color:"#ff9966"},
+    {name:"主食類",color:"#cccc33"},
+    {name:"冷凍食品",color:"#9999ff"},
+    {name:"調理済み食品",color:"#cc6666"},
+    {name:"穀類",color:"#996600"},
+    {name:"その他",color:"#999999"}
+  ];
+  if(categories.length===0){ categories = defaultCategories; save(); }
+
+  // === 表示更新 ===
+  function render(){
+    const tbody=document.querySelector("#categoryTable tbody");
+    tbody.innerHTML="";
+    categories.forEach((cat,i)=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td><input value="${cat.name}" onchange="editName(${i},this.value)"></td>
+        <td><input type="color" value="${cat.color}" onchange="editColor(${i},this.value)"></td>
+        <td><button onclick="removeCategory(${i})">削除</button></td>
+      `;
+      tbody.append(tr);
+    });
+  }
+
+  function editName(i,val){ categories[i].name=val; save(); }
+  function editColor(i,val){ categories[i].color=val; save(); }
+
+  function removeCategory(i){
+    if(confirm("削除しますか？")){
+      categories.splice(i,1);
+      save();
+      render();
+    }
+  }
+
+  function addCategory(){
+    const name=document.getElementById("newCatName").value.trim();
+    const color=document.getElementById("newCatColor").value;
+    if(!name) return alert("名前を入力してください");
+    categories.push({name,color});
+    document.getElementById("newCatName").value="";
+    save();
+    render();
+    alert("カテゴリを追加しました！");
+  }
+
+  function save(){
+    localStorage.setItem("categories",JSON.stringify(categories));
+  }
+
+  function saveAndReturn(){
+    save();
+    alert("変更を保存しました！");
+    location.href="main.html";
+  }
+
+  render();
+</script>
+</body>
+</html>

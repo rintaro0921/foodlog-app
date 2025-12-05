@@ -2,31 +2,40 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>AIレシピ提案</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>フードログ｜AIレシピ提案</title>
 <style>
-body { font-family: sans-serif; margin: 40px; background: #fff9f0; }
-textarea { width: 100%; height: 100px; }
-#result { margin-top: 20px; white-space: pre-wrap; background: #f0f0f0; padding: 10px; border-radius: 8px; }
+  body { font-family: "Segoe UI", sans-serif; margin: 0; padding: 20px; transition: background 0.4s, color 0.4s; }
+  header { background: orange; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+  header button { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+  main { max-width: 700px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+  pre { white-space: pre-wrap; line-height: 1.6; font-size: 15px; }
+  body.night { background: #121212; color: #e0f7ff; }
+  body.night main { background: #1f1f1f; color: #e0f7ff; box-shadow: 0 0 10px rgba(0,150,255,0.3); }
 </style>
 </head>
 <body>
-  <h1>AIレシピ提案</h1>
-  <p>食材を入力してください（例：牛乳、卵、トマト）</p>
-  <textarea id="ingredients"></textarea><br>
-  <button onclick="getRecipe()">レシピを提案</button>
-  <div id="result"></div>
+<header>
+  <h2>フードログ｜AIレシピ提案</h2>
+  <div>
+    <button onclick="location.href='main.html'">戻る</button>
+  </div>
+</header>
+
+<main>
+  <h3>おすすめレシピ</h3>
+  <pre id="recipeText">読み込み中...</pre>
+</main>
 
 <script>
-async function getRecipe() {
-  const ingredients = document.getElementById("ingredients").value.split(/[、,\s]+/);
-  const res = await fetch("http://localhost:3000/api/recipe", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ingredients })
-  });
-  const data = await res.json();
-  document.getElementById("result").textContent = data.result || "エラーが発生しました";
+function applyTheme(){
+  const h=new Date().getHours();
+  document.body.classList.toggle("night",h<5||h>18);
 }
+applyTheme();
+
+const recipe = localStorage.getItem("ai_recipe");
+document.getElementById("recipeText").textContent = recipe || "レシピ情報がありません。";
 </script>
 </body>
 </html>
