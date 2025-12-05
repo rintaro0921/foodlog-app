@@ -1,0 +1,56 @@
+const notificationBtn = document.getElementById('notificationBtn');
+
+// ==== ブランチ（分類）を追加した inventory の例 ====
+// foodName, expiryDate, hidden に branch を追加
+let inventory = [
+  { foodName: "牛乳", expiryDate: "2025-12-08", hidden: false, branch: "乳製品" },
+  { foodName: "鶏肉", expiryDate: "2025-12-07", hidden: false, branch: "肉類" },
+  { foodName: "レタス", expiryDate: "2025-12-09", hidden: false, branch: "野菜" }
+];
+
+function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    alert("このブラウザは通知機能をサポートしていません。");
+    return;
+  }
+  if (Notification.permission === "default") {
+    Notification.requestPermission().then(permission => {
+      if (permission !== "granted") alert("通知が許可されませんでした。");
+    });
+  }
+}
+
+function sendNotification(title, body) {
+  if (Notification.permission === "granted") {
+    new Notification(title, {
+      body: body,
+      icon: "https://cdn-icons-png.flaticon.com/512/1827/1827349.png"
+    });
+  } else {
+    alert(body);
+  }
+}
+
+notificationBtn.addEventListener('click', () => {
+  requestNotificationPermission();
+
+  const today = new Date();
+
+  const nearExpiry = inventory.filter(item => {
+    if (item.hidden) return false;
+    const diff = daysBetween(today, item.expiryDate);
+    return diff <= 3 && diff >= 0;
+  });
+
+  if (nearExpiry.length === 0) {
+    sendNotification("通知", "賞味期限が近い食品はありません。");
+  } else {
+    const message = nearExpiry.map(item => {
+      const diff = daysBetween(new Date(), item.expiryDate);
+      // ★ ブランチ（branch） を通知メッセージに追加
+      return `[${item.branch}] ${item.foodName} の賞味期限はあと ${diff}日`;
+    }).join('\n');
+
+    sendNotification("賞味期限が近い食品", message);
+  }
+});
