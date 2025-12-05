@@ -1,0 +1,26 @@
+// 通知許可をもらう
+Notification.requestPermission();
+
+// 通知ボタン
+document.getElementById("notifyBtn").addEventListener("click", checkExpire);
+
+// 在庫データをチェックして通知
+function checkExpire() {
+
+  const items = JSON.parse(localStorage.getItem("foods")) || [];
+  const today = new Date();
+
+  items.forEach(item => {
+    const expire = new Date(item.expireDate);
+    const remainDays = Math.ceil((expire - today) / (1000 * 60 * 60 * 24));
+
+    // 3日以内なら通知
+    if (remainDays <= 3) {
+      new Notification("期限の近い食品があります！", {
+        body: `${item.name} の賞味期限は ${item.expireDate} です`,
+        icon: "https://cdn-icons-png.flaticon.com/512/1046/1046857.png"
+      });
+    }
+  });
+
+}
