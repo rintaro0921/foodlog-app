@@ -27,9 +27,7 @@
     text-align: center;
     transition: background 0.5s;
   }
-  .login-box h1 {
-    margin-bottom: 25px;
-  }
+  .login-box h1 { margin-bottom: 25px; }
   input {
     width: 80%;
     padding: 10px;
@@ -57,24 +55,10 @@
     background: orange;
     color: white;
   }
-
-  /* 夜間テーマ */
-  body.night {
-    background: #121212;
-    color: #e0f7ff;
-  }
-  body.night .login-box {
-    background: rgba(30,30,30,0.9);
-  }
-  body.night input {
-    background: #222;
-    color: #e0f7ff;
-    border: 1px solid #666;
-  }
-  body.night button.active {
-    background: #00aaff;
-    color: white;
-  }
+  body.night { background: #121212; color: #e0f7ff; }
+  body.night .login-box { background: rgba(30,30,30,0.9); }
+  body.night input { background: #222; color: #e0f7ff; border: 1px solid #666; }
+  body.night button.active { background: #00aaff; color: white; }
 </style>
 </head>
 <body>
@@ -86,81 +70,110 @@
       <button id="registerTab" onclick="switchTab('register')">新規登録</button>
     </div>
 
+    <!-- ログインフォーム -->
     <div id="loginForm">
       <input id="loginUser" placeholder="ユーザー名"><br>
       <input id="loginPass" type="password" placeholder="パスワード"><br>
       <button onclick="login()">ログイン</button>
     </div>
 
+    <!-- 登録フォーム -->
     <div id="registerForm" style="display:none;">
       <input id="regUser" placeholder="ユーザー名"><br>
       <input id="regPass" type="password" placeholder="パスワード"><br>
       <button onclick="register()">登録</button>
     </div>
+
+    <p id="msg" style="color:red;"></p>
   </div>
 </div>
 
 <script>
-  // === テーマ自動切替 ===
-  function applyTheme() {
-    const now = new Date();
-    const hour = now.getHours();
-    if (hour >= 5 && hour <= 18) {
-      document.body.classList.remove('night');
-    } else {
-      document.body.classList.add('night');
-    }
+// === テーマ自動切替 ===
+function applyTheme() {
+  const hour = new Date().getHours();
+  document.body.classList.toggle('night', hour < 5 || hour > 18);
+}
+applyTheme();
+
+// === タブ切替 ===
+function switchTab(tab) {
+  const loginTab = document.getElementById('loginTab');
+  const registerTab = document.getElementById('registerTab');
+  const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
+  if (tab === 'login') {
+    loginForm.style.display = 'block';
+    registerForm.style.display = 'none';
+    loginTab.classList.add('active');
+    registerTab.classList.remove('active');
+  } else {
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
+    loginTab.classList.remove('active');
+    registerTab.classList.add('active');
   }
-  applyTheme();
+}
 
-  // === タブ切替 ===
-  function switchTab(tab) {
-    const loginTab = document.getElementById('loginTab');
-    const registerTab = document.getElementById('registerTab');
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    if (tab === 'login') {
-      loginForm.style.display = 'block';
-      registerForm.style.display = 'none';
-      loginTab.classList.add('active');
-      registerTab.classList.remove('active');
-    } else {
-      loginForm.style.display = 'none';
-      registerForm.style.display = 'block';
-      loginTab.classList.remove('active');
-      registerTab.classList.add('active');
-    }
+// === ログイン処理 ===
+async function login() {
+  const user = document.getElementById("loginUser").value.trim();
+  const pass = document.getElementById("loginPass").value.trim();
+  const msg = document.getElementById("msg");
+  msg.textContent = "";
+
+  if (!user || !pass) {
+    msg.textContent = "未入力があります。";
+    return;
   }
 
-  // === ログイン処理 ===
-  function login() {
-    const user = document.getElementById('loginUser').value.trim();
-    const pass = document.getElementById('loginPass').value.trim();
-    const users = JSON.parse(localStorage.getItem("users") || "{}");
-
-    if (users[user] && users[user] === pass) {
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    const data = await res.json();
+    if (data.ok) {
       alert("ログイン成功！");
-      localStorage.setItem("currentUser", user);
       window.location.href = "main.html";
     } else {
-      alert("ユーザー名またはパスワードが違います");
+      msg.textContent = data.error || "ログインに失敗しました。";
     }
+  } catch (e) {
+    msg.textContent = "通信エラーが発生しました。";
+  }
+}
+
+// === 新規登録処理 ===
+async function register() {
+  const user = document.getElementById("regUser").value.trim();
+  const pass = document.getElementById("regPass").value.trim();
+  const msg = document.getElementById("msg");
+  msg.textContent = "";
+
+  if (!user || !pass) {
+    msg.textContent = "未入力があります。";
+    return;
   }
 
-  // === 新規登録処理 ===
-  function register() {
-    const user = document.getElementById('regUser').value.trim();
-    const pass = document.getElementById('regPass').value.trim();
-    if (!user || !pass) return alert("すべて入力してください");
-
-    const users = JSON.parse(localStorage.getItem("users") || "{}");
-    if (users[user]) return alert("このユーザー名は既に存在します");
-
-    users[user] = pass;
-    localStorage.setItem("users", JSON.stringify(users));
-    alert("登録完了！ログインしてください。");
-    switchTab('login');
+  try {
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alert("登録完了しました！");
+      switchTab('login');
+    } else {
+      msg.textContent = data.error || "登録に失敗しました。";
+    }
+  } catch (e) {
+    msg.textContent = "通信エラーが発生しました。";
   }
+}
 </script>
 </body>
 </html>
